@@ -1,0 +1,31 @@
+storage:
+  type: file # file or mysql
+  mysql:
+    host: localhost
+    port: 3306
+    username: root
+    password: CHANGE_ME
+    database: bank
+    table-prefix: bank_
+
+lang:
+  prefix: '&dBank&8> &d'
+  no-permission: 'You do not have permission for this command'
+  player-only: 'Only players can use this command'
+  help: |
+    &dBank help:
+    &d/bank help - Shows you a command list
+    &d/bank bal - Shows you your bank balance
+    &d/bank deposit [amount] - Deposits money into your bank
+    &d/bank withdraw [amount] - Withdraws money from your bank
+  own-balance: 'You have $%amount in your bank account'
+  other-balance: '%name has $%amount in their bank account'
+  never-joined: 'The player you specified has never joined the server'
+  specify-amount: 'You need to specify an amount'
+  deposit-own: 'You deposited $%amount into your bank account'
+  deposit-other: 'You deposited $%amount into %name''s bank account'
+  withdraw-own: 'You withdrew $%amount from your bank account'
+  withdraw-other: 'You withdrew $%amount from %name''s bank account'
+  other-not-enough-money: '%name does not have enough money to do this'
+  not-enough-money: 'You don''t have enough money to do this'
+  error: 'An error occurred while performing this action. Your balance has not been changed.'

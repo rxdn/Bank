@@ -1,0 +1,14 @@
+name: Bank
+authors: [DotRar, pinkpig]
+version: 1.0
+main: com.perkelle.dev.bank.Bank
+depend: [Vault]
+permissions:
+  bank.*:
+    children:
+      bank.player: true
+      bank.admin: true
+  bank.player:
+    description: Base permission
+  bank.admin:
+    description: Permission for admin commands
