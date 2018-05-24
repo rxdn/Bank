@@ -20,6 +20,8 @@ class Config: YMLConfig() {
             config.getString("storage.mysql.table-prefix")
     )
 
+    fun overrideBaltop() = getConfig().getConfigValue("override-baltop", true)
+
     fun getMessage(type: MessageType) = ChatColor.translateAlternateColorCodes('&', getConfigValue<String>("lang.${MessageType.PREFIX.configName}") + getConfigValue<String>("lang.${type.configName}"))
 
     data class DatabaseDetails(val host: String, val port: Int, val username: String, val password: String, val database: String, val tablePrefix: String)

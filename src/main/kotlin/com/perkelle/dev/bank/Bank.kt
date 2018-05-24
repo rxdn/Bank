@@ -5,6 +5,7 @@ import com.perkelle.dev.bank.backend.StoreBackend
 import com.perkelle.dev.bank.backend.getBackendProvider
 import com.perkelle.dev.bank.backend.impl.DatabaseBackend
 import com.perkelle.dev.bank.backend.impl.FlatFileBackend
+import com.perkelle.dev.bank.commands.BaltopCommand
 import com.perkelle.dev.bank.commands.BankCommand
 import com.perkelle.dev.bank.config.Config
 import com.perkelle.dev.bank.listener.JoinListener
@@ -31,7 +32,7 @@ class Bank: JavaPlugin() {
 
         backendProvider = when {
             config.getStorageType() == BackendType.FLATFILE -> FlatFileBackend()
-            config.getStorageType() == BackendType.FLATFILE -> DatabaseBackend()
+            config.getStorageType() == BackendType.DATABASE -> DatabaseBackend()
             else -> {
                 logger.severe("Invalid backend type (should be 'file' or 'mysql'). Defaulting to file.")
                 FlatFileBackend()
@@ -53,6 +54,7 @@ class Bank: JavaPlugin() {
 
         server.pluginManager.registerEvents(JoinListener(), this)
         BankCommand().register()
+        BaltopCommand().register()
     }
 
     override fun onDisable() {

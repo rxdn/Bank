@@ -3,14 +3,17 @@ package com.perkelle.dev.bank.backend.impl
 import com.perkelle.dev.bank.backend.StoreBackend
 import com.perkelle.dev.bank.config.getConfig
 import com.perkelle.dev.bank.utils.Callback
+import com.perkelle.dev.bank.utils.getBalance
 import com.perkelle.dev.bank.utils.onComplete
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.launch
+import org.bukkit.Bukkit
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 class DatabaseBackend: StoreBackend {
@@ -40,13 +43,15 @@ class DatabaseBackend: StoreBackend {
             config.addDataSourceProperty("cachePrepStmts", true)
             config.addDataSourceProperty("prepStmtCacheSize", 250)
             config.addDataSourceProperty("prepStmtCacheSqlLimit", 2048)
-            config.addDataSourceProperty("maxIdle", 1)
+            config.addDataSourceProperty("maxIdle", 4)
             config.maximumPoolSize = 5
 
             ds = HikariDataSource(config)
 
             Database.connect(ds)
-            SchemaUtils.create(BankTable, UUIDTable)
+            transaction {
+                SchemaUtils.create(BankTable, UUIDTable)
+            }
             true
         } catch(ex: Exception) {
             ex.printStackTrace()
@@ -57,9 +62,11 @@ class DatabaseBackend: StoreBackend {
     override fun deposit(p: UUID, amount: Double) {
         getBalance(p) { current ->
             launch {
-                BankTable.upsert(listOf(BankTable.balance)) {
-                    it[uuid] = p.toString()
-                    it[balance] = current.toBigDecimal() + amount.toBigDecimal()
+                transaction {
+                    BankTable.upsert(listOf(BankTable.balance)) {
+                        it[uuid] = p.toString()
+                        it[balance] = current.toBigDecimal() + amount.toBigDecimal()
+                    }
                 }
             }
         }
@@ -68,9 +75,22 @@ class DatabaseBackend: StoreBackend {
     override fun withdraw(p: UUID, amount: Double) {
         getBalance(p) { current ->
             launch {
+                transaction {
+                    BankTable.upsert(listOf(BankTable.balance)) {
+                        it[uuid] = p.toString()
+                        it[balance] = current.toBigDecimal() - amount.toBigDecimal()
+                    }
+                }
+            }
+        }
+    }
+
+    override fun setAmount(p: UUID, amount: Double) {
+        launch {
+            transaction {
                 BankTable.upsert(listOf(BankTable.balance)) {
                     it[uuid] = p.toString()
-                    it[balance] = current.toBigDecimal() - amount.toBigDecimal()
+                    it[balance] = amount.toBigDecimal()
                 }
             }
         }
@@ -78,9 +98,11 @@ class DatabaseBackend: StoreBackend {
 
     override fun getBalance(p: UUID, callback: Callback<Double>) {
         async {
-            BankTable.select {
-                BankTable.uuid eq p.toString()
-            }.map { it[BankTable.balance] }.firstOrNull()
+            transaction {
+                BankTable.select {
+                    BankTable.uuid eq p.toString()
+                }.map { it[BankTable.balance] }.firstOrNull()
+            }
         }.onComplete {
             callback(it?.toDouble() ?: 0.0)
         }
@@ -88,9 +110,11 @@ class DatabaseBackend: StoreBackend {
 
     override fun getUUID(name: String, callback: Callback<UUID?>) {
         async {
-            UUIDTable.select {
-                UUIDTable.name eq name
-            }.map { it[UUIDTable.uuid] }.firstOrNull()
+            transaction {
+                UUIDTable.select {
+                    UUIDTable.name eq name
+                }.map { it[UUIDTable.uuid] }.firstOrNull()
+            }
         }.onComplete {
             if(it == null) callback(null)
             else callback(UUID.fromString(it))
@@ -99,11 +123,36 @@ class DatabaseBackend: StoreBackend {
 
     override fun setUUID(name: String, uuid: UUID) {
         launch {
-            UUIDTable.upsert(listOf(UUIDTable.uuid, UUIDTable.name)) {
-                it[this.uuid] = uuid.toString()
-                it[this.name] = name
+            transaction {
+                UUIDTable.upsert(listOf(UUIDTable.uuid, UUIDTable.name)) {
+                    it[this.uuid] = uuid.toString()
+                    it[this.name] = name
+                }
             }
         }
+    }
+
+    override fun getTop10(callback: Callback<TreeMap<String, Double>>) {
+        async {
+            transaction {
+                val uuids = UUIDTable.selectAll().map { it[UUIDTable.name] to it[UUIDTable.uuid] }
+                val all = BankTable.selectAll().orderBy(BankTable.balance, false)
+                        .map { row ->
+                            val uuid = row[BankTable.uuid]
+                            val balance = row[BankTable.balance]
+                            uuids.first { it.second == uuid }.first to
+                                balance.toDouble() + Bukkit.getOfflinePlayer(UUID.fromString(uuid)).getBalance() }
+
+                val top10 by lazy {
+                    if(all.size > 10) all.subList(0, 9)
+                    else all.subList(0, all.size)
+                }
+
+                val sortedMap = TreeMap<String, Double>()
+                top10.forEach { sortedMap[it.first] = it.second }
+                sortedMap
+            }
+        }.onComplete(callback)
     }
 
     override fun shutdown() {

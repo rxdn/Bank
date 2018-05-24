@@ -4,6 +4,7 @@ enum class MessageType(val configName: String) {
     PREFIX("prefix"),
     NO_PERMISSION("no-permission"),
     PLAYER_ONLY("player-only"),
+    SPECIFY_PLAYER("specify-player"),
     HELP("help"),
     OWN_BALANCE("own-balance"),
     OTHER_BALANCE("other-balance"),
@@ -16,4 +17,8 @@ enum class MessageType(val configName: String) {
     TOO_POOR("not-enough-money"),
     TOO_POOR_OTHER("other-not-enough-money"),
     ERROR("error"),
+    BALTOP_FIRST("baltop-first-line"),
+    BALTOP_LINE("baltop-balance-line"),
+    UPDATED_BALANCE("updated-balance"),
+    UPDATED_OTHER_BALANCE("updated-other-balance"),
 }

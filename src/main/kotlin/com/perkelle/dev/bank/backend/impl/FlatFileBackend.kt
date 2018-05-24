@@ -4,7 +4,10 @@ import com.perkelle.dev.bank.Bank
 import com.perkelle.dev.bank.backend.StoreBackend
 import com.perkelle.dev.bank.config.FileName
 import com.perkelle.dev.bank.config.YMLConfig
+import com.perkelle.dev.bank.config.getConfig
 import com.perkelle.dev.bank.utils.Callback
+import com.perkelle.dev.bank.utils.getBalance
+import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import java.util.*
 
@@ -27,7 +30,7 @@ class FlatFileBackend: StoreBackend {
     }
 
     override fun deposit(p: UUID, amount: Double) {
-        val current = data.getDouble("balances.$p}", 0.0)
+        val current = data.getDouble("balances.$p", 0.0)
         val updated = current + amount
 
         data.set("balances.$p", updated)
@@ -38,6 +41,10 @@ class FlatFileBackend: StoreBackend {
         val updated = current - amount
 
         data.set("balances.$p", updated)
+    }
+
+    override fun setAmount(p: UUID, amount: Double) {
+        data.set("balances.$p", amount)
     }
 
     override fun getBalance(p: UUID, callback: Callback<Double>) {
@@ -52,11 +59,31 @@ class FlatFileBackend: StoreBackend {
         else callback(UUID.fromString(uuidStr))
     }
 
+    private fun getName(uuid: String) = data.getConfigurationSection("uuid").getKeys(false).first { data.getString("uuid.$it") == uuid }
+
     override fun setUUID(name: String, uuid: UUID) {
         data.set("uuid.${name.toLowerCase()}", uuid.toString())
     }
 
-    override fun shutdown() {}
+    override fun getTop10(callback: Callback<TreeMap<String, Double>>) {
+        val map = TreeMap<String, Double>()
+
+        val all = data.getConfigurationSection("balances").getKeys(false)
+                .map { getName(it) to data.getDouble("balances.$it", 0.0) + Bukkit.getOfflinePlayer(UUID.fromString(it)).getBalance() }
+                .sortedByDescending { it.second }
+
+        val top10 by lazy {
+            if(all.size > 10) all.subList(0, 9)
+            else all.subList(0, all.size)
+        }
+
+        map.putAll(top10.toMap())
+        callback(map)
+    }
+
+    override fun shutdown() {
+        dataFile.save()
+    }
 
     @FileName("data.yml")
     class DataFile: YMLConfig(Bank.instance.dataFolder)

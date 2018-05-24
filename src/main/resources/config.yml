@@ -8,16 +8,20 @@ storage:
     database: bank
     table-prefix: bank_
 
+override-baltop: true
+
 lang:
   prefix: '&dBank&8> &d'
   no-permission: 'You do not have permission for this command'
   player-only: 'Only players can use this command'
+  specify-player: 'You need to specify a player'
   help: |
     &dBank help:
     &d/bank help - Shows you a command list
     &d/bank bal - Shows you your bank balance
     &d/bank deposit [amount] - Deposits money into your bank
     &d/bank withdraw [amount] - Withdraws money from your bank
+    &d/bank set [player] [amount] - Sets the balance of a player
   own-balance: 'You have $%amount in your bank account'
   other-balance: '%name has $%amount in their bank account'
   never-joined: 'The player you specified has never joined the server'
@@ -29,3 +33,7 @@ lang:
   other-not-enough-money: '%name does not have enough money to do this'
   not-enough-money: 'You don''t have enough money to do this'
   error: 'An error occurred while performing this action. Your balance has not been changed.'
+  baltop-first-line: 'Top 10 balances:'
+  baltop-balance-line: '%number) %name - $%amount'
+  updated-balance: 'Your balance has been updated to $%amount'
+  updated-other-balance: '%name''s balance has been updated to $%amount'

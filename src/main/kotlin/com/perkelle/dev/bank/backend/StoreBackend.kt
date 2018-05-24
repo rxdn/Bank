@@ -15,11 +15,15 @@ interface StoreBackend {
 
     fun withdraw(p: UUID, amount: Double)
 
+    fun setAmount(p: UUID, amount: Double)
+
     fun getBalance(p: UUID, callback: Callback<Double>)
 
     fun getUUID(name: String, callback: Callback<UUID?>)
 
     fun setUUID(name: String, uuid: UUID)
+
+    fun getTop10(callback: Callback<TreeMap<String, Double>>)
 
     fun shutdown()
 }
