@@ -7,9 +7,12 @@ import com.perkelle.dev.bank.config.YMLConfig
 import com.perkelle.dev.bank.config.getConfig
 import com.perkelle.dev.bank.utils.Callback
 import com.perkelle.dev.bank.utils.getBalance
+import com.perkelle.dev.bank.utils.onComplete
+import kotlinx.coroutines.experimental.async
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import java.util.*
+import kotlin.collections.ArrayList
 
 class FlatFileBackend: StoreBackend {
 
@@ -62,23 +65,29 @@ class FlatFileBackend: StoreBackend {
     private fun getName(uuid: String) = data.getConfigurationSection("uuid").getKeys(false).first { data.getString("uuid.$it") == uuid }
 
     override fun setUUID(name: String, uuid: UUID) {
+        data.getConfigurationSection("uuid").getKeys(false).map { it to data.getString("uuid.$it") }.filter { it.second != null }.filter { it.second == uuid.toString() }.forEach {
+            if(it.first != name) {
+                data.set("uuid.${it.first}", null)
+            }
+        }
+
         data.set("uuid.${name.toLowerCase()}", uuid.toString())
     }
 
-    override fun getTop10(callback: Callback<TreeMap<String, Double>>) {
-        val map = TreeMap<String, Double>()
+    override fun getTop10(callback: Callback<List<Pair<String, Double>>>) {
+        async {
+            val all = data.getConfigurationSection("uuid").getKeys(false)
+                    .map { it to UUID.fromString(data.getString("uuid.$it")) }
+                    .map { it.first to Bukkit.getOfflinePlayer(it.second).getBalance() + dataFile.getConfigValue("balances.${it.second}", 0.0) }
+                    .sortedByDescending { it.second }
 
-        val all = data.getConfigurationSection("balances").getKeys(false)
-                .map { getName(it) to data.getDouble("balances.$it", 0.0) + Bukkit.getOfflinePlayer(UUID.fromString(it)).getBalance() }
-                .sortedByDescending { it.second }
+            val top10 by lazy {
+                if(all.size > 10) all.subList(0, 10)
+                else all
+            }
 
-        val top10 by lazy {
-            if(all.size > 10) all.subList(0, 9)
-            else all.subList(0, all.size)
-        }
-
-        map.putAll(top10.toMap())
-        callback(map)
+            top10.toList()
+        }.onComplete(callback)
     }
 
     override fun shutdown() {

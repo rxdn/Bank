@@ -7,8 +7,11 @@ import com.perkelle.dev.bank.utils.addBalance
 import com.perkelle.dev.bank.utils.getBalance
 import com.perkelle.dev.bank.utils.removeBalance
 import org.bukkit.Bukkit
+import java.text.DecimalFormat
 
 class BankCommand: ICommand {
+
+    private val df = DecimalFormat("###,###,###,###,###.##")
 
     override fun register() {
         command("bank") {
@@ -36,7 +39,7 @@ class BankCommand: ICommand {
                         }
 
                         getBackendProvider().getBalance(uuid) { balance ->
-                            p.sendMessage(getConfig().getMessage(MessageType.OTHER_BALANCE).replace("%name", args[0]).replace("%amount", balance.toString()))
+                            p.sendMessage(getConfig().getMessage(MessageType.OTHER_BALANCE).replace("%name", args[0]).replace("%amount", df.format(balance)))
                         }
                     }
                 }

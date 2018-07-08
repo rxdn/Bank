@@ -2,7 +2,6 @@ package com.perkelle.dev.bank.backend
 
 import com.perkelle.dev.bank.Bank
 import com.perkelle.dev.bank.utils.Callback
-import org.bukkit.entity.Player
 import java.util.*
 
 fun getBackendProvider() = Bank.instance.backendProvider
@@ -23,7 +22,7 @@ interface StoreBackend {
 
     fun setUUID(name: String, uuid: UUID)
 
-    fun getTop10(callback: Callback<TreeMap<String, Double>>)
+    fun getTop10(callback: Callback<List<Pair<String, Double>>>)
 
     fun shutdown()
 }

@@ -9,6 +9,7 @@ class JoinListener: Listener {
 
     @EventHandler fun onJoin(e: PlayerJoinEvent) {
         val p = e.player
+        getBackendProvider()
         getBackendProvider().setUUID(p.name, p.uniqueId)
     }
 }

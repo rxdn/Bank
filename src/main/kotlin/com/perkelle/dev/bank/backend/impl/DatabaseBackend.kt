@@ -124,6 +124,14 @@ class DatabaseBackend: StoreBackend {
     override fun setUUID(name: String, uuid: UUID) {
         launch {
             transaction {
+                UUIDTable.select {
+                    UUIDTable.name eq name
+                }.map { it[UUIDTable.name] to it[UUIDTable.uuid] }.filter { it.second == uuid.toString() }.filter { it.first != name }.forEach {
+                    UUIDTable.deleteWhere {
+                        UUIDTable.name eq it.first
+                    }
+                }
+
                 UUIDTable.upsert(listOf(UUIDTable.uuid, UUIDTable.name)) {
                     it[this.uuid] = uuid.toString()
                     it[this.name] = name
@@ -132,7 +140,7 @@ class DatabaseBackend: StoreBackend {
         }
     }
 
-    override fun getTop10(callback: Callback<TreeMap<String, Double>>) {
+    override fun getTop10(callback: Callback<List<Pair<String, Double>>>) {
         async {
             transaction {
                 val uuids = UUIDTable.selectAll().map { it[UUIDTable.name] to it[UUIDTable.uuid] }
@@ -144,13 +152,11 @@ class DatabaseBackend: StoreBackend {
                                 balance.toDouble() + Bukkit.getOfflinePlayer(UUID.fromString(uuid)).getBalance() }
 
                 val top10 by lazy {
-                    if(all.size > 10) all.subList(0, 9)
+                    if(all.size > 10) all.subList(0, 10)
                     else all.subList(0, all.size)
                 }
 
-                val sortedMap = TreeMap<String, Double>()
-                top10.forEach { sortedMap[it.first] = it.second }
-                sortedMap
+                top10
             }
         }.onComplete(callback)
     }

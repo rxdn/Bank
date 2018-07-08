@@ -35,8 +35,8 @@ dependencies {
     compileOnly "org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT"
     compileOnly "net.milkbowl.vault:VaultAPI:1.6"
     compileOnly "mysql:mysql-connector-java:+"
-    compile "org.jetbrains.kotlin:kotlin-stdlib"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:+"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.23.3"
     compile "org.jetbrains.exposed:exposed:0.10.2"
     compile "com.zaxxer:HikariCP:3.0.0"
 }
