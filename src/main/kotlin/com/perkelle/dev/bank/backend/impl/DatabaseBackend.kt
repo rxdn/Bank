@@ -145,9 +145,13 @@ class DatabaseBackend: StoreBackend {
             transaction {
                 val uuids = UUIDTable.selectAll().map { it[UUIDTable.name] to it[UUIDTable.uuid] }
                 val all = BankTable.selectAll().orderBy(BankTable.balance, false)
-                        .map { row ->
+                        .mapNotNull { row ->
                             val uuid = row[BankTable.uuid]
                             val balance = row[BankTable.balance]
+
+                            val p = Bukkit.getOfflinePlayer(UUID.fromString(uuid))
+                            if(p == null || p.name == null) return@mapNotNull null
+
                             val ecoBalance = Bukkit.getOfflinePlayer(UUID.fromString(uuid))?.getBalance() ?: 0.0
                             uuids.first { it.second == uuid }.first to balance.toDouble() + ecoBalance
                         }
