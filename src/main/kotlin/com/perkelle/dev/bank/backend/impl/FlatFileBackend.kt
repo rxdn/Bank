@@ -78,7 +78,9 @@ class FlatFileBackend: StoreBackend {
         async {
             val all = data.getConfigurationSection("uuid").getKeys(false)
                     .map { it to UUID.fromString(data.getString("uuid.$it")) }
-                    .map { it.first to Bukkit.getOfflinePlayer(it.second).getBalance() + dataFile.getConfigValue("balances.${it.second}", 0.0) }
+                    .map {  (name, uuid) ->
+                        val ecoBalance = Bukkit.getOfflinePlayer(uuid)?.getBalance() ?: 0.0
+                        name to ecoBalance + dataFile.getConfigValue("balances.$uuid", 0.0) }
                     .sortedByDescending { it.second }
 
             val top10 by lazy {

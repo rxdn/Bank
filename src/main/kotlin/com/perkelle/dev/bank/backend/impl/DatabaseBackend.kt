@@ -148,8 +148,9 @@ class DatabaseBackend: StoreBackend {
                         .map { row ->
                             val uuid = row[BankTable.uuid]
                             val balance = row[BankTable.balance]
-                            uuids.first { it.second == uuid }.first to
-                                balance.toDouble() + Bukkit.getOfflinePlayer(UUID.fromString(uuid)).getBalance() }
+                            val ecoBalance = Bukkit.getOfflinePlayer(UUID.fromString(uuid))?.getBalance() ?: 0.0
+                            uuids.first { it.second == uuid }.first to balance.toDouble() + ecoBalance
+                        }
 
                 val top10 by lazy {
                     if(all.size > 10) all.subList(0, 10)
