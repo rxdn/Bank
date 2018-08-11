@@ -1,13 +1,19 @@
 package com.perkelle.dev.bank.commands
 
 import com.perkelle.dev.bank.backend.getBackendProvider
+import com.perkelle.dev.bank.backend.impl.DatabaseBackend
+import com.perkelle.dev.bank.backend.impl.FlatFileBackend
 import com.perkelle.dev.bank.config.MessageType
 import com.perkelle.dev.bank.config.getConfig
 import com.perkelle.dev.bank.utils.addBalance
 import com.perkelle.dev.bank.utils.getBalance
 import com.perkelle.dev.bank.utils.removeBalance
+import kotlinx.coroutines.experimental.launch
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
+import java.awt.image.DataBuffer
 import java.text.DecimalFormat
+import java.util.*
 
 class BankCommand: ICommand {
 
@@ -196,6 +202,33 @@ class BankCommand: ICommand {
                     Bukkit.getPlayer(uuid)?.sendMessage(getConfig().getMessage(MessageType.UPDATED_BALANCE)
                             .replace("%amount", amount.toString()))
                 }
+            }
+
+            subCommand("converttomysql", permission = "bank.admin") {
+                val backend = getBackendProvider()
+
+                val uuids = mutableMapOf<String, UUID>()
+                if(backend is DatabaseBackend) {
+                    val fileBackend = FlatFileBackend()
+                    fileBackend.setup()
+
+                    uuids.putAll(fileBackend.getPlayers())
+
+                    uuids.forEach(backend::setUUID)
+                    uuids.forEach { _, uuid -> fileBackend.getBalance(uuid) { balance -> backend.setAmount(uuid, balance) } }
+                } else {
+                    launch {
+                        val databaseBackend = DatabaseBackend()
+                        databaseBackend.setup()
+
+                        uuids.putAll((backend as FlatFileBackend).getPlayers())
+
+                        uuids.forEach(databaseBackend::setUUID)
+                        uuids.forEach { _, uuid -> backend.getBalance(uuid) { balance -> databaseBackend.setAmount(uuid, balance) } }
+                    }
+                }
+
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getConfigValue<String>("lang.${MessageType.PREFIX.configName}") + "Converted to MySQL backend. Restart your server with the database backend enabled to apply the changes."))
             }
         }
 

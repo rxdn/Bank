@@ -37,6 +37,7 @@ class FlatFileBackend: StoreBackend {
         val updated = current + amount
 
         data.set("balances.$p", updated)
+        dataFile.save()
     }
 
     override fun withdraw(p: UUID, amount: Double) {
@@ -44,10 +45,12 @@ class FlatFileBackend: StoreBackend {
         val updated = current - amount
 
         data.set("balances.$p", updated)
+        dataFile.save()
     }
 
     override fun setAmount(p: UUID, amount: Double) {
         data.set("balances.$p", amount)
+        dataFile.save()
     }
 
     override fun getBalance(p: UUID, callback: Callback<Double>) {
@@ -98,6 +101,8 @@ class FlatFileBackend: StoreBackend {
     override fun shutdown() {
         dataFile.save()
     }
+
+    fun getPlayers() = data.getConfigurationSection("uuid").getKeys(false).map { it to UUID.fromString(data.getString("uuid.$it")) }.toMap()
 
     @FileName("data.yml")
     class DataFile: YMLConfig(Bank.instance.dataFolder)
