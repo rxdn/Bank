@@ -68,7 +68,7 @@ class FlatFileBackend: StoreBackend {
     private fun getName(uuid: String) = data.getConfigurationSection("uuid").getKeys(false).first { data.getString("uuid.$it") == uuid }
 
     override fun setUUID(name: String, uuid: UUID) {
-        data.getConfigurationSection("uuid").getKeys(false).map { it to data.getString("uuid.$it") }.filter { it.second != null }.filter { it.second == uuid.toString() }.forEach {
+        data.getConfigurationSection("uuid")?.getKeys(false)?.map { it to data.getString("uuid.$it") }?.filter { it.second != null }?.filter { it.second == uuid.toString() }?.forEach {
             if(it.first != name) {
                 data.set("uuid.${it.first}", null)
             }

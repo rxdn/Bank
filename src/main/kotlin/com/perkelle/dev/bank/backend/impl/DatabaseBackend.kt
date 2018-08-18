@@ -144,17 +144,18 @@ class DatabaseBackend: StoreBackend {
         async {
             transaction {
                 val uuids = UUIDTable.selectAll().map { it[UUIDTable.name] to it[UUIDTable.uuid] }
-                val all = BankTable.selectAll().orderBy(BankTable.balance, false)
-                        .mapNotNull { row ->
-                            val uuid = row[BankTable.uuid]
-                            val balance = row[BankTable.balance]
 
-                            val p = Bukkit.getOfflinePlayer(UUID.fromString(uuid))
-                            if(p == null || p.name == null) return@mapNotNull null
+                val all = BankTable.selectAll().mapNotNull { row ->
+                    val uuid = row[BankTable.uuid]
+                    val bankBalance = row[BankTable.balance]
 
-                            val ecoBalance = Bukkit.getOfflinePlayer(UUID.fromString(uuid))?.getBalance() ?: 0.0
-                            uuids.first { it.second == uuid }.first to balance.toDouble() + ecoBalance
-                        }
+                    val p = Bukkit.getOfflinePlayer(UUID.fromString(uuid))
+                    if(p == null || p.name == null) return@mapNotNull null
+
+                    val ecoBalance = p.getBalance()
+
+                    uuids.first { (_, puuid) -> puuid == uuid }.first to bankBalance.toDouble() + ecoBalance
+                }.sortedByDescending { it.second }
 
                 val top10 by lazy {
                     if(all.size > 10) all.subList(0, 10)
